@@ -26,6 +26,11 @@ export const projects: Project[] = [
 ]
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    if (process.platform !== "darwin") {
+        console.log(chalk.red("This only works on macOS"))
+        process.exit(1)
+    }
+
     const start = performance.now()
 
     /* -------------------------------- Deploying ------------------------------- */

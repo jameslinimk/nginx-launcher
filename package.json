@@ -7,7 +7,7 @@
 	},
 	"type": "module",
 	"scripts": {
-		"build": "node --loader ts-node/esm index.ts",
+		"run": "node --loader ts-node/esm index.ts",
 		"check": "node --loader ts-node/esm check.ts"
 	},
 	"dependencies": {
