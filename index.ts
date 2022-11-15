@@ -29,7 +29,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const start = performance.now()
 
     /* -------------------------------- Deploying ------------------------------- */
-    console.log(chalk.blue("Deploying projects...\n"))
+    console.log(chalk.blue("Deploying projects..."))
     for await (const project of projects) {
         const cwd = `${basePath}/${project.name}/server`
 

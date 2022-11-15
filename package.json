@@ -7,7 +7,7 @@
 	},
 	"type": "module",
 	"scripts": {
-		"build": "ts-node index.ts"
+		"build": "node --loader ts-node/esm index.ts"
 	},
 	"dependencies": {
 		"chalk": "^5.1.2",
