@@ -82,8 +82,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     /* ----------------------------- Launching Nginx ---------------------------- */
     console.log(chalk.blue("Launching nginx...\n"))
 
-    await exec("sudo nginx -s quit")
-    await exec("sudo nginx")
+    await exec("sudo nginx -s quit").catch(() => {})
+    await exec("sudo nginx").catch(() => {})
 
     console.log(chalk.blue("Nginx launched"))
 
