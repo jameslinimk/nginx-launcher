@@ -1,9 +1,9 @@
 import chalk from "chalk"
 import detectPort from "detect-port"
-import { readFileSync } from "fs"
+import { existsSync } from "fs"
 import { projects } from "./index.js"
 
-if (readFileSync("/var/run/nginx.pid", "utf-8").length !== 0) {
+if (existsSync("/var/run/nginx.pid")) {
     console.log(chalk.red("nginx is running"))
 } else {
     console.log(chalk.red("nginx is not running"))
