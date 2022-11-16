@@ -11,7 +11,7 @@ interface Project {
     location: string
 }
 
-const basePath = "/Users/jamesalin/Documents"
+const basePath = "/home/ec2-user/home"
 export const projects: Project[] = [
     {
         name: "new-portfolio",
