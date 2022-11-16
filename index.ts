@@ -76,13 +76,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
             if (line.trim() === "# locations here") {
                 const spaceLength = line.length - line.trimStart().length
                 return projects
-                    .map((project) =>
-                        nginx(
-                            project.location,
-                            project.port.toString(),
-                            spaceLength
-                        )
-                    )
+                    .map((project) => nginx(project.location, project.port.toString(), spaceLength))
                     .join("\n\n")
             }
             return line
@@ -96,8 +90,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     /* ----------------------------- Launching Nginx ---------------------------- */
     console.log(chalk.blue("Launching nginx...\n"))
 
-    await exec("nginx -s quit")
-    await exec("nginx")
+    await exec("sudo nginx -s quit")
+    await exec("sudo nginx")
 
     console.log(chalk.blue("Nginx launched"))
 
