@@ -36,6 +36,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     /* -------------------------------- Deploying ------------------------------- */
     console.log(chalk.blue("Deploying projects..."))
     for await (const project of projects) {
+        await exec("git pull", { cwd: `${basePath}/${project.name}` })
+
         const cwd = `${basePath}/${project.name}/server`
 
         if (!existsSync(`${cwd}/deploy`)) {
