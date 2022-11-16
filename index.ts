@@ -41,12 +41,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         }
 
         console.log(chalk.blueBright(`Deploying ${project.name}...`))
-        const { stderr } = await exec("bash ./deploy", { cwd })
-        if (stderr) {
-            console.log(chalk.red(`Error while deploying ${project.name}`))
-            console.log(chalk.gray(stderr))
-            process.exit(1)
-        }
+        await exec("bash ./deploy", { cwd })
 
         console.log(chalk.green(`Deployed ${project.name}\n`))
     }
