@@ -75,7 +75,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         })
         .join("\n")
 
-    writeFileSync("/usr/local/etc/nginx/nginx.conf", newConfig)
+    writeFileSync("/etc/nginx/nginx.conf", newConfig)
 
     console.log(chalk.blue("Done updating nginx config...\n"))
 
