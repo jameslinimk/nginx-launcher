@@ -14,14 +14,14 @@ interface Project {
 const basePath = "/home/ec2-user/home"
 export const projects: Project[] = [
     {
-        name: "new-portfolio",
-        port: 3000,
-        location: "/",
-    },
-    {
         name: "rogueman",
         port: 8604,
         location: "/rogueman",
+    },
+    {
+        name: "new-portfolio",
+        port: 3000,
+        location: "/",
     },
 ]
 
