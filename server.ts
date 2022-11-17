@@ -6,7 +6,7 @@ const { createProxyServer } = httpProxy
 
 const apiProxy = createProxyServer()
 const app = express()
-const port = 1000
+const port = 2436
 
 projects.forEach((project) => {
     app.all(`${project.location}/*`, (req, res) => {

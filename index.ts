@@ -30,7 +30,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const start = performance.now()
 
     /* -------------------------------- Deploying ------------------------------- */
-    console.log(chalk.blue("Deploying projects..."))
+    console.log(chalk.blueBright("Deploying projects..."))
     for await (const project of projects) {
         await exec("git pull", { cwd: `${basePath}/${project.name}` })
 
@@ -48,23 +48,23 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     }
 
     /* ------------------------------ Nginx config ------------------------------ */
-    console.log(chalk.blue("Updating nginx config...\n"))
+    console.log(chalk.blueBright("Updating nginx config..."))
     const config = readFileSync("./nginx.conf", "utf-8")
     writeFileSync("/etc/nginx/nginx.conf", config)
-    console.log(chalk.blue("Done updating nginx config...\n"))
+    console.log(chalk.blueBright("Done updating nginx config...\n"))
 
     /* ----------------------------- Launching Nginx ---------------------------- */
-    console.log(chalk.blue("Launching nginx...\n"))
+    console.log(chalk.blueBright("Launching nginx..."))
     await exec("sudo nginx -s quit").catch(() => {})
     await exec("sudo nginx").catch(() => {})
-    console.log(chalk.blue("Nginx launched"))
+    console.log(chalk.blueBright("Nginx launched\n"))
 
     /* ---------------------------- Launching server ---------------------------- */
-    console.log(chalk.blue("Launching server...\n"))
+    console.log(chalk.blueBright("Launching server..."))
     const tmux_name = "main_server"
     await exec(`tmux kill-session -t ${tmux_name}`, { cwd: resolve() }).catch(() => {})
     await exec(`tmux new -d -s ${tmux_name} "pnpm run serve"`, { cwd: resolve() }).catch(() => {})
-    console.log(chalk.blue("Server launched"))
+    console.log(chalk.blueBright("Server launched\n"))
 
     console.log(chalk.green(`Done! Took ${performance.now() - start}ms`))
 }
