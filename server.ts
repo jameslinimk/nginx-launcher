@@ -9,7 +9,10 @@ const app = express()
 const port = 2436
 
 projects.forEach((project) => {
-    app.all(`${project.location}/*`, (req, res) => {
+    console.log(project)
+    console.log(`${project.location === "/" ? "" : project.location}/*`)
+    app.all(`${project.location === "/" ? "" : project.location}/*`, (req, res) => {
+        console.log(`${project.location === "/" ? "" : project.location}/*`)
         apiProxy.web(req, res, { target: `http://localhost:${project.port}` })
     })
 })
