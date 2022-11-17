@@ -1,6 +1,7 @@
 import chalk from "chalk"
 import { exec as _exec } from "child_process"
 import { existsSync, readFileSync, writeFileSync } from "fs"
+import { resolve } from "path"
 import { fileURLToPath } from "url"
 import { promisify } from "util"
 const exec = promisify(_exec)
@@ -48,44 +49,22 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 
     /* ------------------------------ Nginx config ------------------------------ */
     console.log(chalk.blue("Updating nginx config...\n"))
-    const nginx = (location: string, port: string, spaces: number) =>
-        `location ${location} {
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header Host $host;
-    proxy_set_header X-NginX-Proxy true;
-    proxy_pass http://localhost:${port};
-    proxy_redirect http://localhost:${port} https://$server_name;
-}`
-            .split("\n")
-            .map((l) => `${" ".repeat(spaces)}${l}`)
-            .join("\n")
-
     const config = readFileSync("./nginx.conf", "utf-8")
-    const newConfig = config
-        .split("\n")
-        .map((line) => {
-            if (line.trim() === "# locations here") {
-                const spaceLength = line.length - line.trimStart().length
-                return projects
-                    .map((project) => nginx(project.location, project.port.toString(), spaceLength))
-                    .join("\n\n")
-            }
-            return line
-        })
-        .join("\n")
-
-    writeFileSync("/etc/nginx/nginx.conf", newConfig)
-
+    writeFileSync("/etc/nginx/nginx.conf", config)
     console.log(chalk.blue("Done updating nginx config...\n"))
 
     /* ----------------------------- Launching Nginx ---------------------------- */
     console.log(chalk.blue("Launching nginx...\n"))
-
     await exec("sudo nginx -s quit").catch(() => {})
     await exec("sudo nginx").catch(() => {})
-
     console.log(chalk.blue("Nginx launched"))
+
+    /* ---------------------------- Launching server ---------------------------- */
+    console.log(chalk.blue("Launching server...\n"))
+    const tmux_name = "main_server"
+    await exec(`tmux kill-session -t ${tmux_name}`, { cwd: resolve() }).catch(() => {})
+    await exec(`tmux new -d -s ${tmux_name} "pnpm run serve"`, { cwd: resolve() }).catch(() => {})
+    console.log(chalk.blue("Server launched"))
 
     console.log(chalk.green(`Done! Took ${performance.now() - start}ms`))
 }

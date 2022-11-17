@@ -10,10 +10,13 @@
 	"type": "module",
 	"scripts": {
 		"run": "node --loader ts-node/esm index.ts",
-		"check": "node --loader ts-node/esm check.ts"
+		"check": "node --loader ts-node/esm check.ts",
+		"serve": "node --loader ts-node/esm server.ts"
 	},
 	"dependencies": {
 		"chalk": "^5.1.2",
-		"detect-port": "^1.5.1"
+		"detect-port": "^1.5.1",
+		"express": "^4.18.2",
+		"http-proxy": "^1.18.1"
 	}
 }
