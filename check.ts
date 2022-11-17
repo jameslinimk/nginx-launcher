@@ -4,7 +4,7 @@ import { existsSync } from "fs"
 import { projects } from "./index.js"
 
 if (existsSync("/var/run/nginx.pid")) {
-    console.log(chalk.red("nginx is running"))
+    console.log(chalk.green("nginx is running"))
 } else {
     console.log(chalk.red("nginx is not running"))
 }
