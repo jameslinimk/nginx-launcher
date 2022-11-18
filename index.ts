@@ -23,6 +23,17 @@ const nginx = (project: Project) => `    # ${project.name} server
             proxy_pass http://localhost:${project.port};
             proxy_redirect http://localhost:${project.port} https://$server_name;
         }
+    }
+
+    # Redirect http to https
+    server {
+        if ($host = ${project.host}.jamesalin.com) {
+            return 301 https://${project.host}.jamesalin.com$request_uri;
+        }
+
+        listen 80;
+        server_name ${project.host}.jamesalin.com;
+        return 404;
     }`
 
 interface Project {
