@@ -1,15 +1,34 @@
 import chalk from "chalk"
 import { exec as _exec } from "child_process"
 import { existsSync, readFileSync, writeFileSync } from "fs"
-import { resolve } from "path"
 import { fileURLToPath } from "url"
 import { promisify } from "util"
 const exec = promisify(_exec)
 
+const nginx = (project: Project) => `    # ${project.name} server
+    server {
+        server_name ${project.host}.jamesalin.com;
+        listen 443 ssl;
+
+        ssl_certificate /etc/letsencrypt/live/${project.host}.jamesalin.com/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/${project.host}.jamesalin.com/privkey.pem;
+        include /etc/letsencrypt/options-ssl-nginx.conf;
+        ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+        location / {
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Host $host;
+            proxy_set_header X-NginX-Proxy true;
+            proxy_pass http://localhost:${project.port};
+            proxy_redirect http://localhost:${project.port} https://$server_name;
+        }
+    }`
+
 interface Project {
     name: string
     port: number
-    location: string
+    host?: string
 }
 
 const basePath = "/home/ec2-user/home"
@@ -17,12 +36,12 @@ export const projects: Project[] = [
     {
         name: "rogueman",
         port: 8604,
-        location: "/rogueman",
+        host: "rm",
     },
     {
         name: "new-portfolio",
         port: 3000,
-        location: "/",
+        host: null,
     },
 ]
 
@@ -49,7 +68,19 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 
     /* ------------------------------ Nginx config ------------------------------ */
     console.log(chalk.blueBright("Updating nginx config..."))
-    const config = readFileSync("./nginx.conf", "utf-8")
+    let config = readFileSync("./nginx.conf", "utf-8")
+    config = config
+        .split("\n")
+        .map((line) => {
+            if (line.trim() === "# servers here") {
+                return projects
+                    .filter((p) => p.host)
+                    .map((p) => nginx(p))
+                    .join("\n\n")
+            }
+            return line
+        })
+        .join("\n")
     writeFileSync("/etc/nginx/nginx.conf", config)
     console.log(chalk.blueBright("Done updating nginx config...\n"))
 
@@ -58,13 +89,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     await exec("sudo nginx -s quit").catch(() => {})
     await exec("sudo nginx").catch(() => {})
     console.log(chalk.blueBright("Nginx launched\n"))
-
-    /* ---------------------------- Launching server ---------------------------- */
-    console.log(chalk.blueBright("Launching server..."))
-    const tmux_name = "main_server"
-    await exec(`tmux kill-session -t ${tmux_name}`, { cwd: resolve() }).catch(() => {})
-    await exec(`tmux new -d -s ${tmux_name} "pnpm run serve"`, { cwd: resolve() }).catch(() => {})
-    console.log(chalk.blueBright("Server launched\n"))
 
     console.log(chalk.green(`Done! Took ${performance.now() - start}ms`))
 }
