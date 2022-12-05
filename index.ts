@@ -54,6 +54,11 @@ export const projects: Project[] = [
         port: 3000,
         host: null,
     },
+    {
+        name: "chess-ai",
+        port: 3252,
+        host: "chess",
+    }
 ]
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
