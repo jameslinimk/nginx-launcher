@@ -97,7 +97,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
             return line
         })
         .join("\n")
-    writeFileSync("/etc/nginx/nginx.conf", config)
+    writeFileSync("temp_conf.conf", config)
+    await exec("sudo mv temp_conf.conf /etc/nginx/nginx.conf")
     console.log(chalk.blueBright("Done updating nginx config...\n"))
 
     /* ----------------------------- Launching Nginx ---------------------------- */
