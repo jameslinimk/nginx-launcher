@@ -42,7 +42,7 @@ interface Project {
     host?: string
 }
 
-const basePath = "/home/ec2-user/home"
+const basePath = "/home/ec2-user/projects"
 export const projects: Project[] = [
     {
         name: "rogueman",
@@ -58,7 +58,7 @@ export const projects: Project[] = [
         name: "chess-ai",
         port: 3252,
         host: "chess",
-    }
+    },
 ]
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
