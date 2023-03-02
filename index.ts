@@ -50,7 +50,7 @@ export const projects: Project[] = [
         host: "rm",
     },
     {
-        name: "new-portfolio",
+        name: "portfolio",
         port: 3000,
         host: null,
     },
