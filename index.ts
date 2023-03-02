@@ -67,7 +67,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     /* -------------------------------- Deploying ------------------------------- */
     console.log(chalk.blueBright("Deploying projects..."))
     for await (const project of projects) {
-        await exec("git pull", { cwd: `${basePath}/${project.name}` })
+        await exec("git pull", { cwd: `${basePath}/${project.name}` }).catch((err) => {
+            console.log(chalk.red(`Error pulling ${project.name}: ${err}`))
+        })
 
         const cwd = `${basePath}/${project.name}/server`
 
