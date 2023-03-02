@@ -34,6 +34,20 @@ const nginx = (project: Project) => `    # ${project.name} server
         listen 80;
         server_name ${project.host}.jamesalin.com;
         return 404;
+    }${
+        project.host === "www"
+            ? `
+    # Redirect non-www to www
+    server {
+        if ($host = jamesalin.com) {
+            return 301 https://www.jamesalin.com$request_uri;
+        }
+
+        listen 80;
+        server_name jamesalin.com;
+        return 404;
+    }`
+            : ""
     }`
 
 interface Project {
@@ -52,7 +66,7 @@ export const projects: Project[] = [
     {
         name: "portfolio",
         port: 3000,
-        host: null,
+        host: "www",
     },
     {
         name: "chess-ai",
