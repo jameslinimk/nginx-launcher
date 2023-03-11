@@ -1,79 +1,31 @@
 import chalk from "chalk"
-import { exec as _exec } from "child_process"
-import { existsSync, readFileSync, writeFileSync } from "fs"
+import { exec } from "child_process"
+import { existsSync, writeFileSync } from "fs"
 import { fileURLToPath } from "url"
-import { promisify } from "util"
-const exec = promisify(_exec)
+import { Project, basePath, mainTemplate, projects, subTemplate } from "./config.js"
 
-const nginx = (project: Project) => `    # ${project.name} server
-    server {
-        server_name ${project.host}.jamesalin.com;
-        listen 443 ssl;
+const nginx = (project: Project) =>
+    subTemplate.replaceAll("${name}", project.name).replaceAll("${port}", `${project.port}`)
 
-        ssl_certificate /etc/letsencrypt/live/${project.host}.jamesalin.com/fullchain.pem;
-        ssl_certificate_key /etc/letsencrypt/live/${project.host}.jamesalin.com/privkey.pem;
-        include /etc/letsencrypt/options-ssl-nginx.conf;
-        ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+const cmd = (command: string, cwd: string | null, ignoreErr = false, log = true): Promise<void> =>
+    new Promise((resolve) => {
+        exec(command, { cwd }, (err, stdout, stderr) => {
+            const e = err || stderr
+            if (!ignoreErr && e) {
+                console.log(chalk.red(`Error running ${command} in ${cwd}: ${e}`))
+                process.exit(1)
+            }
 
-        location / {
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header Host $host;
-            proxy_set_header X-NginX-Proxy true;
-            proxy_pass http://localhost:${project.port};
-            proxy_redirect http://localhost:${project.port} https://$server_name;
-        }
-    }
-
-    # Redirect http to https
-    server {
-        if ($host = ${project.host}.jamesalin.com) {
-            return 301 https://${project.host}.jamesalin.com$request_uri;
-        }
-
-        listen 80;
-        server_name ${project.host}.jamesalin.com;
-        return 404;
-    }${
-        project.host === "www"
-            ? `
-    # Redirect non-www to www
-    server {
-        if ($host = jamesalin.com) {
-            return 301 https://www.jamesalin.com$request_uri;
-        }
-
-        listen 80;
-        server_name jamesalin.com;
-        return 404;
-    }`
-            : ""
-    }`
-
-interface Project {
-    name: string
-    port: number
-    host?: string
-}
-
-const basePath = "/home/ec2-user/projects"
-export const projects: Project[] = [
-    {
-        name: "rogueman",
-        port: 8604,
-        host: "rm",
-    },
-    {
-        name: "portfolio",
-        port: 3000,
-        host: "www",
-    },
-    {
-        name: "chess-ai",
-        port: 3252,
-        host: "chess",
-    },
-]
+            if (log && stdout) console.log(chalk.gray(stdout))
+        }).on("exit", (code) => {
+            if (code === 0) {
+                resolve()
+            } else {
+                console.log(chalk.red(`Error running ${command} in ${cwd}: exited with code ${code}`))
+                process.exit(1)
+            }
+        })
+    })
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const start = performance.now()
@@ -81,9 +33,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     /* -------------------------------- Deploying ------------------------------- */
     console.log(chalk.blueBright("Deploying projects..."))
     for await (const project of projects) {
-        await exec("git pull", { cwd: `${basePath}/${project.name}` }).catch((err) => {
-            console.log(chalk.red(`Error pulling ${project.name}: ${err}`))
-        })
+        await cmd("git pull", `${basePath}/${project.name}`, true, false)
 
         const cwd = `${basePath}/${project.name}/server`
 
@@ -93,35 +43,40 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         }
 
         console.log(chalk.blueBright(`Deploying ${project.name}...`))
-        await exec("bash ./deploy", { cwd })
+        await cmd("bash ./deploy", cwd, false, true)
 
         console.log(chalk.green(`Deployed ${project.name}\n`))
     }
 
     /* ------------------------------ Nginx config ------------------------------ */
     console.log(chalk.blueBright("Updating nginx config..."))
-    let config = readFileSync("./nginx.conf", "utf-8")
-    config = config
-        .split("\n")
-        .map((line) => {
-            if (line.trim() === "# servers here") {
-                return projects
-                    .filter((p) => p.host)
-                    .map((p) => nginx(p))
-                    .join("\n\n")
-            }
-            return line
-        })
-        .join("\n")
-    writeFileSync("temp_conf.conf", config)
-    await exec("sudo mv temp_conf.conf /etc/nginx/nginx.conf")
+
+    writeFileSync(
+        "temp_conf.conf",
+        mainTemplate
+            .split("\n")
+            .map((line) => {
+                if (line.trim() === "# servers here") {
+                    return projects
+                        .filter((p) => p.host)
+                        .map((p) => nginx(p))
+                        .join("\n\n")
+                }
+                return line
+            })
+            .join("\n")
+    )
+
+    await cmd("sudo mv temp_conf.conf /etc/nginx/nginx.conf", null, true, false)
+
     console.log(chalk.blueBright("Done updating nginx config...\n"))
 
     /* ----------------------------- Launching Nginx ---------------------------- */
     console.log(chalk.blueBright("Launching nginx..."))
-    await exec("sudo nginx -s quit").catch(() => {})
-    await exec("sudo nginx").catch(() => {})
-    console.log(chalk.blueBright("Nginx launched\n"))
 
+    await cmd("sudo nginx -s quit", null, true, false)
+    await cmd("sudo nginx", null, true, false)
+
+    console.log(chalk.blueBright("Nginx launched\n"))
     console.log(chalk.green(`Done! Took ${performance.now() - start}ms`))
 }
