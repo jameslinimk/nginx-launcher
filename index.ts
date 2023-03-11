@@ -10,7 +10,7 @@ const nginx = (project: Project) =>
         .replaceAll("${port}", `${project.port}`)
         .replaceAll("${host}", project.host)
         .split("\n")
-        .map((l) => `    ${l}`)
+        .map((l) => `\t${l}`)
         .join("\n")
 
 const cmd = (command: string, cwd: string | null, ignoreErr = false, log = true): Promise<void> =>
