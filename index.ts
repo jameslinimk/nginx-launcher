@@ -7,9 +7,12 @@ import { Project, basePath, mainTemplate, projects, subTemplate } from "./config
 const nginx = (project: Project) =>
     subTemplate.replaceAll("${name}", project.name).replaceAll("${port}", `${project.port}`)
 
-const cmd = (command: string, cwd: string | undefined, ignoreErr = false, log = true): Promise<void> =>
+const cmd = (command: string, cwd: string | null, ignoreErr = false, log = true): Promise<void> =>
     new Promise((resolve) => {
-        const ex = spawn(command, { cwd })
+        const cmd = command.split(" ")[0]
+        const args = command.split(" ").slice(1)
+
+        const ex = spawn(cmd, args, { cwd })
 
         ex.on("exit", (code) => {
             if (!ignoreErr && code !== 0) {
@@ -76,15 +79,15 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
             .join("\n")
     )
 
-    await cmd("sudo mv temp_conf.conf /etc/nginx/nginx.conf", undefined, false, false)
+    await cmd("sudo mv temp_conf.conf /etc/nginx/nginx.conf", null, false, false)
 
     console.log(chalk.blueBright("Done updating nginx config...\n"))
 
     /* ----------------------------- Launching Nginx ---------------------------- */
     console.log(chalk.blueBright("Launching nginx..."))
 
-    await cmd("sudo nginx -s quit", undefined, true, false)
-    await cmd("sudo nginx", undefined, true, false)
+    await cmd("sudo nginx -s quit", null, true, false)
+    await cmd("sudo nginx", null, true, false)
 
     console.log(chalk.blueBright("Nginx launched\n"))
     console.log(chalk.green(`Done! Took ${performance.now() - start}ms`))
