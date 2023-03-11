@@ -10,9 +10,10 @@ const nginx = (project: Project) =>
 const cmd = (command: string, cwd: string | null, ignoreErr = false, log = true): Promise<void> =>
     new Promise((resolve) => {
         exec(command, { cwd }, (err, stdout, stderr) => {
+            console.log({ err, stdout, stderr })
             const e = err || stderr
             if (!ignoreErr && e) {
-                console.log(chalk.red(`Error running ${command} in ${cwd}: ${e}`))
+                console.log(chalk.red(`Error running "${command}" in "${cwd}": ${e}`))
                 process.exit(1)
             }
 
@@ -21,7 +22,7 @@ const cmd = (command: string, cwd: string | null, ignoreErr = false, log = true)
             if (code === 0) {
                 resolve()
             } else {
-                console.log(chalk.red(`Error running ${command} in ${cwd}: exited with code ${code}`))
+                console.log(chalk.red(`Error running "${command}" in "${cwd}": exited with code ${code}`))
                 process.exit(1)
             }
         })
