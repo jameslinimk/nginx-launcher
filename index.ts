@@ -2,7 +2,6 @@ import chalk from "chalk"
 import { spawn } from "child_process"
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "fs"
 import { join } from "path"
-import { fileURLToPath } from "url"
 import { Project, __dirname, basePath, mainTemplate, projects, subTemplate } from "./config.js"
 
 const nginx = (project: Project) =>
@@ -148,6 +147,4 @@ const main = async () => {
     console.log(chalk.green(`Done! Took ${performance.now() - start}ms`))
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    await main()
-}
+await main()
