@@ -1,7 +1,5 @@
 .history
 node_modules
-*.js
-*.js.map
 temp_conf.conf
 meta.json
 logs/*

@@ -1,6 +1,6 @@
 import chalk from "chalk"
 import { spawn } from "child_process"
-import { existsSync, readFileSync, statSync, writeFileSync } from "fs"
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "fs"
 import { join } from "path"
 import { fileURLToPath } from "url"
 import { Project, __dirname, basePath, mainTemplate, projects, subTemplate } from "./config.js"
@@ -41,7 +41,8 @@ const cmd = (command: string, cwd: string | null, ignoreErr = false, log = true)
 
 const runDeploy = async (command: string, cwd: string, project: Project): Promise<void> =>
     new Promise((resolve) => {
-        const logFile = join(__dirname, `logs/${project.name}.${Date.now()}.log`)
+        const logFolder = join(__dirname, "logs")
+        const logFile = join(logFolder, `${project.name}.${Date.now()}.log`)
         const cmd = command.split(" ")[0]
         const args = command.split(" ").slice(1)
 
@@ -53,15 +54,13 @@ const runDeploy = async (command: string, cwd: string, project: Project): Promis
             }
 
             console.log(chalk.green(`Deployed ${project.name} successfully, log saved to ${logFile}`))
+            if (!existsSync(logFolder)) mkdirSync(logFolder)
             writeFileSync(logFile, log)
             resolve()
         })
 
         let log = ""
-        const updateLog = (data: any) => {
-            log += data.toString()
-            console.log(`${project.name} test`)
-        }
+        const updateLog = (data: any) => (log += data.toString())
 
         ex.stdout.on("data", updateLog)
         ex.stderr.on("data", updateLog)
@@ -119,7 +118,7 @@ const main = async () => {
     console.log(chalk.blueBright("Updating nginx config..."))
 
     writeFileSync(
-        "temp_conf.conf",
+        join(__dirname, "temp_conf.conf"),
         mainTemplate
             .split("\n")
             .map((line) => {
