@@ -1,7 +1,7 @@
 {
     "scripts": {
-        "run": "ts-node index",
-        "check": "ts-node check"
+        "run": "ts-node-esm index",
+        "check": "ts-node-esm check"
     },
     "dependencies": {
         "@types/detect-port": "^1.3.2",
