@@ -1,5 +1,5 @@
 import chalk from "chalk"
-import { exec } from "child_process"
+import { spawn } from "child_process"
 import { existsSync, writeFileSync } from "fs"
 import { fileURLToPath } from "url"
 import { Project, basePath, mainTemplate, projects, subTemplate } from "./config.js"
@@ -9,13 +9,7 @@ const nginx = (project: Project) =>
 
 const cmd = (command: string, cwd: string | null, ignoreErr = false, log = true): Promise<void> =>
     new Promise((resolve) => {
-        const ex = exec(command, { cwd }, (err, _, stderr) => {
-            const error = err || stderr
-            if (!ignoreErr && error) {
-                console.log(chalk.red(`Error running "${command}" in "${cwd}": ${error}`))
-                process.exit(1)
-            }
-        })
+        const ex = spawn(command, { cwd })
 
         ex.on("exit", (code) => {
             if (code !== 0) {
@@ -26,9 +20,15 @@ const cmd = (command: string, cwd: string | null, ignoreErr = false, log = true)
             resolve()
         })
 
-        ex.on("message", (message) => {
-            if (log) console.log(chalk.gray(message))
-        })
+        if (log) {
+            ex.stdout.on("data", (data) => {
+                console.log(chalk.gray(data.toString()))
+            })
+
+            ex.stderr.on("data", (data) => {
+                console.log(chalk.red("[Error] ") + chalk.gray(data.toString()))
+            })
+        }
     })
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
