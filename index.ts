@@ -5,7 +5,12 @@ import { fileURLToPath } from "url"
 import { Project, basePath, mainTemplate, projects, subTemplate } from "./config.js"
 
 const nginx = (project: Project) =>
-    subTemplate.replaceAll("${name}", project.name).replaceAll("${port}", `${project.port}`)
+    subTemplate
+        .replaceAll("${name}", project.name)
+        .replaceAll("${port}", `${project.port}`)
+        .replaceAll("${host}", project.host)
+        .split("\n")
+        .map((l) => `    ${l}`)
 
 const cmd = (command: string, cwd: string | null, ignoreErr = false, log = true): Promise<void> =>
     new Promise((resolve) => {
@@ -25,11 +30,11 @@ const cmd = (command: string, cwd: string | null, ignoreErr = false, log = true)
 
         if (log) {
             ex.stdout.on("data", (data) => {
-                console.log(chalk.gray(data.toString()))
+                process.stdout.write(chalk.gray(data.toString()))
             })
 
             ex.stderr.on("data", (data) => {
-                console.log(chalk.red("[Error] ") + chalk.gray(data.toString()))
+                process.stdout.write(chalk.gray.bgRed(data.toString()))
             })
         }
     })
