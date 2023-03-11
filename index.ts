@@ -19,7 +19,6 @@ const cmd = (command: string, cwd: string | null, ignoreErr = false, log = true)
         const args = command.split(" ").slice(1)
 
         const ex = spawn(cmd, args, { cwd })
-
         ex.on("exit", (code) => {
             if (!ignoreErr && code !== 0) {
                 console.log(chalk.red(`Error running "${command}" in "${cwd}": exited with code ${code}`))
@@ -35,9 +34,34 @@ const cmd = (command: string, cwd: string | null, ignoreErr = false, log = true)
             })
 
             ex.stderr.on("data", (data) => {
-                process.stdout.write(chalk.gray.bgRed(data.toString()))
+                process.stdout.write(chalk.gray.bgHex("#ffac9a")(data.toString()))
             })
         }
+    })
+
+const runDeploy = async (command: string, cwd: string, project: Project): Promise<void> =>
+    new Promise((resolve) => {
+        const logFile = join(__dirname, `logs/${project.name}.${Date.now()}.log`)
+        const cmd = command.split(" ")[0]
+        const args = command.split(" ").slice(1)
+
+        const ex = spawn(cmd, args, { cwd })
+        ex.on("exit", (code) => {
+            if (code !== 0) {
+                console.log(chalk.red(`Error running "${command}" in "${cwd}": exited with code ${code}`))
+                process.exit(1)
+            }
+
+            console.log(chalk.green(`Deployed ${project.name} successfully, log saved to ${logFile}`))
+            writeFileSync(logFile, log.join("\n"))
+            resolve()
+        })
+
+        let log: string[] = []
+        const updateLog = (data: any) => log.push(`[${Date.now()}] ${data.toString()}`)
+
+        ex.stdout.on("data", updateLog)
+        ex.stderr.on("data", updateLog)
     })
 
 const metaPath = join(__dirname, "meta.json")
@@ -53,8 +77,9 @@ const metaFile: Record<string, number> = (() => {
 const main = async () => {
     const start = performance.now()
 
-    /* -------------------------------- Deploying ------------------------------- */
-    console.log(chalk.blueBright("Deploying projects..."))
+    /* -------------------------------- Updating -------------------------------- */
+    console.log(chalk.blueBright("Updating projects..."))
+    const deploys = []
     for await (const project of projects) {
         if (!existsSync(`${basePath}/${project.name}`)) {
             console.log(chalk.blueBright(`${project.name} doesn't exist, cloning...`))
@@ -72,15 +97,19 @@ const main = async () => {
 
         const stats = statSync(`${cwd}/deploy`)
         if (stats.mtimeMs > (metaFile?.[project.name] || 0)) {
-            console.log(chalk.blueBright(`Deploying ${project.name}...`))
-            await cmd("bash ./deploy", cwd, false, true)
-
+            deploys.push(runDeploy("bash ./deploy", cwd, project))
             metaFile[project.name] = stats.mtimeMs
-            console.log(chalk.green(`Deployed ${project.name}\n`))
-        } else {
-            console.log(chalk.green(`Already built ${project.name}...`))
+            continue
         }
+
+        console.log(chalk.green(`Already built ${project.name}, skipping...`))
     }
+    console.log(chalk.blueBright("Done updating projects...\n"))
+
+    /* -------------------------------- Deploying ------------------------------- */
+    console.log(chalk.blueBright("Deploying projects..."))
+    await Promise.all(deploys)
+    console.log(chalk.blueBright("Done deploying projects...\n"))
 
     writeFileSync(metaPath, JSON.stringify(metaFile))
 

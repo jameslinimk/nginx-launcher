@@ -4,3 +4,4 @@ node_modules
 *.js.map
 temp_conf.conf
 meta.json
+logs/*
