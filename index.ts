@@ -58,7 +58,10 @@ const runDeploy = async (command: string, cwd: string, project: Project): Promis
         })
 
         let log = ""
-        const updateLog = (data: any) => (log += data.toString())
+        const updateLog = (data: any) => {
+            log += data.toString()
+            console.log(`${project.name} test`)
+        }
 
         ex.stdout.on("data", updateLog)
         ex.stderr.on("data", updateLog)
