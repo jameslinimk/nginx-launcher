@@ -12,6 +12,7 @@ const nginx = (project: Project) =>
         .replaceAll("${host}", project.host)
         .split("\n")
         .map((l) => `    ${l}`)
+        .join("\n")
 
 const cmd = (command: string, cwd: string | null, ignoreErr = false, log = true): Promise<void> =>
     new Promise((resolve) => {
