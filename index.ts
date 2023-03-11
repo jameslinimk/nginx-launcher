@@ -40,9 +40,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         if (!existsSync(`${basePath}/${project.name}`)) {
             console.log(chalk.blueBright(`${project.name} doesn't exist, cloning...`))
             await cmd(`git clone https://github.com/jameslinimk/${project.name}`, `${basePath}`, false, false)
+        } else {
+            await cmd("git pull", `${basePath}/${project.name}`, false, false)
         }
-
-        await cmd("git pull", `${basePath}/${project.name}`, false, false)
 
         const cwd = `${basePath}/${project.name}/server`
 
