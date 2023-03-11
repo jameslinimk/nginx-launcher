@@ -53,12 +53,12 @@ const runDeploy = async (command: string, cwd: string, project: Project): Promis
             }
 
             console.log(chalk.green(`Deployed ${project.name} successfully, log saved to ${logFile}`))
-            writeFileSync(logFile, log.join("\n"))
+            writeFileSync(logFile, log)
             resolve()
         })
 
-        let log: string[] = []
-        const updateLog = (data: any) => log.push(`[${Date.now()}] ${data.toString()}`)
+        let log = ""
+        const updateLog = (data: any) => (log += data.toString())
 
         ex.stdout.on("data", updateLog)
         ex.stderr.on("data", updateLog)
@@ -110,7 +110,6 @@ const main = async () => {
     console.log(chalk.blueBright("Deploying projects..."))
     await Promise.all(deploys)
     console.log(chalk.blueBright("Done deploying projects...\n"))
-
     writeFileSync(metaPath, JSON.stringify(metaFile))
 
     /* ------------------------------ Nginx config ------------------------------ */
