@@ -1,8 +1,9 @@
 import chalk from "chalk"
 import { spawn } from "child_process"
-import { existsSync, writeFileSync } from "fs"
+import { existsSync, readFileSync, statSync, writeFileSync } from "fs"
+import { join } from "path"
 import { fileURLToPath } from "url"
-import { Project, basePath, mainTemplate, projects, subTemplate } from "./config.js"
+import { Project, __dirname, basePath, mainTemplate, projects, subTemplate } from "./config.js"
 
 const nginx = (project: Project) =>
     subTemplate
@@ -39,7 +40,17 @@ const cmd = (command: string, cwd: string | null, ignoreErr = false, log = true)
         }
     })
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+const metaPath = join(__dirname, "meta.json")
+const metaFile: Record<string, number> = (() => {
+    if (existsSync(metaPath)) {
+        return JSON.parse(readFileSync(join(__dirname, "meta.json"), "utf-8"))
+    }
+
+    writeFileSync(metaPath, "{}")
+    return {}
+})()
+
+const main = async () => {
     const start = performance.now()
 
     /* -------------------------------- Deploying ------------------------------- */
@@ -59,11 +70,19 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
             process.exit(1)
         }
 
-        console.log(chalk.blueBright(`Deploying ${project.name}...`))
-        await cmd("bash ./deploy", cwd, false, true)
+        const stats = statSync(`${cwd}/deploy`)
+        if (stats.mtimeMs > (metaFile?.[project.name] || 0)) {
+            console.log(chalk.blueBright(`Deploying ${project.name}...`))
+            await cmd("bash ./deploy", cwd, false, true)
 
-        console.log(chalk.green(`Deployed ${project.name}\n`))
+            metaFile[project.name] = stats.mtimeMs
+            console.log(chalk.green(`Deployed ${project.name}\n`))
+        } else {
+            console.log(chalk.green(`Already built ${project.name}...`))
+        }
     }
+
+    writeFileSync(metaPath, JSON.stringify(metaFile))
 
     /* ------------------------------ Nginx config ------------------------------ */
     console.log(chalk.blueBright("Updating nginx config..."))
@@ -96,4 +115,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 
     console.log(chalk.blueBright("Nginx launched\n"))
     console.log(chalk.green(`Done! Took ${performance.now() - start}ms`))
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    await main()
 }
