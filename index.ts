@@ -33,7 +33,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     /* -------------------------------- Deploying ------------------------------- */
     console.log(chalk.blueBright("Deploying projects..."))
     for await (const project of projects) {
-        await cmd("git pull", `${basePath}/${project.name}`, true, false)
+        if (!existsSync(`${basePath}/${project.name}`)) {
+            console.log(chalk.blueBright(`${project.name} doesn't exist, cloning...`))
+            await cmd(`git clone https://github.com/jameslinimk/${project.name}`, `${basePath}`, false, false)
+        }
+
+        await cmd("git pull", `${basePath}/${project.name}`, false, false)
 
         const cwd = `${basePath}/${project.name}/server`
 
@@ -67,7 +72,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
             .join("\n")
     )
 
-    await cmd("sudo mv temp_conf.conf /etc/nginx/nginx.conf", null, true, false)
+    await cmd("sudo mv temp_conf.conf /etc/nginx/nginx.conf", null, false, false)
 
     console.log(chalk.blueBright("Done updating nginx config...\n"))
 
